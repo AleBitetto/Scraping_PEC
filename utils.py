@@ -113,10 +113,11 @@ def scrape_PEC(chromedriver_path=None, web_page=None, VAT_file=None, VAT_file_se
     tot_vat = df_VAT.shape[0]
     for vat_i, vat in enumerate(df_VAT.VAT.values):
 
-        print("Querying VAT", str(vat_i+1), "/", str(tot_vat), end = "\r")
         if vat not in log.VAT.values:    # check if VAT already in log
+            print("Querying VAT", str(vat_i+1), "/", str(tot_vat), " "*40, end = "\r")
             stop = 0
-            while stop == 0:
+            max_iter = 0
+            while stop == 0 and max_iter <= 10:
                 driver.find_element_by_id("partita_iva").click()
                 driver.find_element_by_id("partita_iva").clear()
                 driver.find_element_by_id("partita_iva").send_keys(vat)
@@ -126,8 +127,10 @@ def scrape_PEC(chromedriver_path=None, web_page=None, VAT_file=None, VAT_file_se
                 if pec == '':
                     pec = 'not found'
                     stop = 1
+                    time.sleep(1)
                 if pec != 'not found' and pec not in df_out.PEC.values:
                     stop = 1
+                max_iter += 1    
 
             # update and save log
             log = log.append({'VAT': vat, 'PEC': pec}, ignore_index=True)
