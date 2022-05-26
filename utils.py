@@ -117,7 +117,7 @@ def scrape_PEC(chromedriver_path=None, web_page=None, VAT_file=None, VAT_file_se
             print("Querying VAT", str(vat_i+1), "/", str(tot_vat), " "*40, end = "\r")
             stop = 0
             max_iter = 0
-            while stop == 0 and max_iter <= 10:
+            while stop == 0 and max_iter <= 5:
                 driver.find_element_by_id("partita_iva").click()
                 driver.find_element_by_id("partita_iva").clear()
                 driver.find_element_by_id("partita_iva").send_keys(vat)
@@ -130,6 +130,8 @@ def scrape_PEC(chromedriver_path=None, web_page=None, VAT_file=None, VAT_file_se
                     time.sleep(1)
                 if pec != 'not found' and pec not in df_out.PEC.values:
                     stop = 1
+                if pec in df_out.PEC.values:
+                    driver.refresh()
                 max_iter += 1    
 
             # update and save log
@@ -144,6 +146,7 @@ def scrape_PEC(chromedriver_path=None, web_page=None, VAT_file=None, VAT_file_se
 
     # check for duplicated PEC
     check_PEC = df_out.PEC.value_counts().rename_axis('PEC').reset_index(name='counts')
+    check_PEC = check_PEC[check_PEC.PEC != "not found"]
     if check_PEC.counts.max() > 1:
         duplicated_PEC = check_PEC[check_PEC.counts > 1]
         duplicated_PEC.merge(df_out, on='PEC').sort_values(by=['PEC']).to_csv('duplicated_PEC.csv', sep=OUT_file_sep, index=False, quoting=1)
